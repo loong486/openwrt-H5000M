@@ -41,7 +41,9 @@
 - `immortalwrt_ref`: `v25.12.0`
 - `runner_type`: `github-hosted` 或 `self-hosted`
 - `qmodem`: `true`
-- `passwall`、`mosdns`、`upnp`、`homeproxy`: 按需开启
+- `passwall`、`mosdns`、`mosdns_luci`、`upnp`: 默认开启
+- `homeproxy`: 按需开启
+- `create_release`: 默认开启
 - `make_jobs`: 留空，或填写 `4` 这类线程数
 
 选择 `self-hosted` 时，workflow 会使用你自己的本地 Runner，并跳过 GitHub
