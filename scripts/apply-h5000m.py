@@ -296,6 +296,15 @@ def insert_after_all(text: str, anchor: str, insert: str) -> str:
     return "".join(rebuilt)
 
 
+def insert_before_case_end(text: str, insert: str, label: str) -> str:
+    if insert.strip() in text:
+        return text
+    marker = "esac\n"
+    if marker not in text:
+        raise SystemExit(f"找不到 {label} 的 case 结束位置：{marker!r}")
+    return text.replace(marker, insert + marker, 1)
+
+
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
 
@@ -348,7 +357,12 @@ def main() -> int:
 \t\t;;
 '''
     if "\thiveton,h5000m)" not in text:
-        text = insert_once(text, "\topenembed,som7981)", led_case, "LED defaults")
+        for marker in ("\topenembed,som7981)", "\tnetgear,wax220)", "\thuasifei,wh3000)"):
+            if marker in text:
+                text = text.replace(marker, led_case + marker, 1)
+                break
+        else:
+            text = insert_before_case_end(text, led_case, "LED defaults")
     write(leds, text)
 
     text = read(wifi_mac)
