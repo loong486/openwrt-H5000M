@@ -71,12 +71,13 @@ temp_label() {
 }
 
 print_temp_status() {
-	local file label lower value count cpu wifi_count other_count
-	local cpu_temp wifi1_temp wifi2_temp other_temp
+	local file label lower value count cpu wifi_count phy_count other_count
+	local cpu_temp wifi1_temp wifi2_temp phy_temp other_temp
 	local first_temp second_temp third_temp
 
 	count=0
 	wifi_count=0
+	phy_count=0
 	other_count=0
 
 	for file in /sys/class/thermal/thermal_zone*/temp /sys/class/hwmon/hwmon*/temp*_input; do
@@ -96,10 +97,14 @@ print_temp_status() {
 			*cpu*|*soc*|*mt798*|*thermal*)
 				[ -n "${cpu_temp:-}" ] || cpu_temp="${value}"
 				;;
-			*wifi*|*radio*|*mt799*|*phy*)
+			*mt799*|*wifi*|*radio*)
 				wifi_count=$((wifi_count + 1))
 				[ "${wifi_count}" -eq 1 ] && wifi1_temp="${value}"
 				[ "${wifi_count}" -eq 2 ] && wifi2_temp="${value}"
+				;;
+			*mdio*|*phy*)
+				phy_count=$((phy_count + 1))
+				[ "${phy_count}" -eq 1 ] && phy_temp="${value}"
 				;;
 			*)
 				other_count=$((other_count + 1))
@@ -114,10 +119,19 @@ print_temp_status() {
 	echo "cpu_temp=${cpu_temp:-}"
 	echo "wifi1_temp=${wifi1_temp:-}"
 	echo "wifi2_temp=${wifi2_temp:-}"
+	echo "phy_temp=${phy_temp:-}"
 }
 
 find_module_temp() {
 	local file value
+
+	for file in /tmp/cache_base_info_* /tmp/cache_*info*; do
+		[ -f "${file}" ] || continue
+		value="$(sed -n 's/.*"key"[[:space:]]*:[[:space:]]*"temperature"[^}]*"value"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${file}" 2>/dev/null | head -n 1 | grep -Eo -- '-?[0-9]+' | head -n 1)"
+		[ -n "${value}" ] || continue
+		echo "${value}"
+		return 0
+	done
 
 	for file in /tmp/qmodem* /tmp/*qmodem* /var/run/qmodem* /var/run/*qmodem*; do
 		[ -f "${file}" ] || continue
@@ -204,7 +218,13 @@ case "${1:-apply}" in
 		echo "pwm=${pwm:-}"
 		[ -n "${pwm:-}" ] && echo "pwm_value=$(cat "${pwm}" 2>/dev/null || true)"
 		echo "fan=${fan:-}"
-		[ -n "${fan:-}" ] && echo "fan_rpm=$(cat "${fan}" 2>/dev/null || true)"
+		if [ -n "${fan:-}" ]; then
+			echo "fan_feedback=1"
+			echo "fan_rpm=$(cat "${fan}" 2>/dev/null || true)"
+		else
+			echo "fan_feedback=0"
+			echo "fan_rpm="
+		fi
 		echo "temp=${temp:-}"
 		[ -n "${temp:-}" ] && echo "temp_value=$(cat "${temp}" 2>/dev/null || true)"
 		module_temp="$(find_module_temp 2>/dev/null || true)"
