@@ -39,6 +39,7 @@ for feed in $(feed_names); do
     qmodem)
       if [ "${INCLUDE_QMODEM}" = "true" ]; then
         install_feed_all "${feed}"
+        bash "${ROOT_DIR}/scripts/patch-qmodem-hotplug.sh" "${SRC_DIR}"
       else
         echo "Skipping qmodem feed because QModem is disabled."
       fi

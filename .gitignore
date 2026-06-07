@@ -1,5 +1,6 @@
 openwrt/
 dl/
 build-cache/
+.codex-official-fw/
 __pycache__/
 *.log

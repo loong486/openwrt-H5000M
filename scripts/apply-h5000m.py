@@ -96,12 +96,16 @@ DTS = r'''// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 &gmac0 {
 	phy-mode = "2500base-x";
 	phy-handle = <&phy0>;
+	nvmem-cells = <&macaddr_factory_24 0>;
+	nvmem-cell-names = "mac-address";
 	status = "okay";
 };
 
 &gmac1 {
 	phy-mode = "internal";
 	phy-handle = <&phy1>;
+	nvmem-cells = <&macaddr_factory_2a 0>;
+	nvmem-cell-names = "mac-address";
 	status = "okay";
 };
 
@@ -153,7 +157,19 @@ DTS = r'''// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 						#size-cells = <1>;
 
 						eeprom_factory_0: eeprom@0 {
-							reg = <0x0 0x1e00>;
+							reg = <0x0 0x1000>;
+						};
+
+						macaddr_factory_24: macaddr@24 {
+							compatible = "mac-base";
+							reg = <0x24 0x6>;
+							#nvmem-cell-cells = <1>;
+						};
+
+						macaddr_factory_2a: macaddr@2a {
+							compatible = "mac-base";
+							reg = <0x2a 0x6>;
+							#nvmem-cell-cells = <1>;
 						};
 					};
 				};
@@ -307,7 +323,12 @@ def main() -> int:
 
     text = read(network)
     mt7987_case = "\tmediatek,mt7987*)\n\t\tucidef_set_interfaces_lan_wan \"eth0 hnat\" eth1\n\t\t;;"
-    h5000m_case = "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth1 eth0\n\t\t;;\n"
+    h5000m_case = "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth0 eth1\n\t\t;;\n"
+    for old_case in (
+        "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth1 eth0\n\t\t;;\n",
+        "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan \"eth0 hnat\" eth1\n\t\t;;\n",
+    ):
+        text = text.replace(old_case, h5000m_case)
     if h5000m_case.strip() not in text:
         if mt7987_case in text:
             text = text.replace(mt7987_case, h5000m_case + mt7987_case, 1)
