@@ -1,5 +1,5 @@
 {
-	"admin/services/h5000m_fancontrol": {
+	"admin/system/h5000m_fancontrol": {
 		"title": "风扇控制",
 		"order": 90,
 		"action": {

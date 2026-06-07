@@ -82,7 +82,7 @@ make -j"$(nproc)"
 
 内置 `luci-app-h5000m-netmode`，可在 LuCI 的“网络 / 出口优先级”中切换有线 WAN 和 5G 模块的优先级。
 
-内置 `luci-app-h5000m-fancontrol`，可在 LuCI 的“服务 / 风扇控制”中设置自动、手动和关闭模式，并显示 PWM、模块温度、CPU 温度和 WiFi 温度。
+内置 `luci-app-h5000m-fancontrol`，可在 LuCI 的“系统 / 风扇控制”中设置自动、手动和关闭模式，并显示 PWM、模块温度、CPU 温度和 WiFi 温度。
 
 ## 本地 Runner
 
