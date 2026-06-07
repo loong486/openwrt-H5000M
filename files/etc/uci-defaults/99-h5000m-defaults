@@ -1,5 +1,23 @@
 #!/bin/sh
 
+logger -t h5000m-defaults "设置默认时区和本地化"
+uci -q set system.@system[0].zonename='Asia/Shanghai'
+uci -q set system.@system[0].timezone='CST-8'
+uci -q get system.ntp >/dev/null 2>&1 || uci -q set system.ntp='timeserver'
+uci -q set system.ntp.enabled='1'
+uci -q delete system.ntp.server
+uci -q add_list system.ntp.server='ntp.aliyun.com'
+uci -q add_list system.ntp.server='cn.pool.ntp.org'
+uci -q add_list system.ntp.server='time1.cloud.tencent.com'
+uci -q add_list system.ntp.server='time.ustc.edu.cn'
+uci -q commit system
+
+if [ -f /etc/config/luci ]; then
+	uci -q get luci.main >/dev/null 2>&1 || uci -q set luci.main='core'
+	uci -q set luci.main.lang='zh_Hans'
+	uci -q commit luci
+fi
+
 logger -t h5000m-defaults "设置默认 LAN 地址为 192.168.10.1"
 uci -q set network.lan.proto='static'
 uci -q set network.lan.ipaddr='192.168.10.1'
@@ -35,6 +53,7 @@ fi
 
 for radio in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-device$/\1/p'); do
 	uci -q set "${radio}.disabled=0"
+	uci -q set "${radio}.country=CN"
 done
 
 for section in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-iface$/\1/p'); do

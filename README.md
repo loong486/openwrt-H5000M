@@ -75,8 +75,11 @@ make -j"$(nproc)"
 
 - LAN IP：`192.168.10.1`
 - root 密码：`admin`
+- 默认时区：`Asia/Shanghai`
+- LuCI 默认语言：简体中文
 - WiFi 名称：H5000M，默认开启
 - WiFi 密码：`1234567890`
+- WiFi 区域：`CN`
 - 有线 WAN 优先：`wan`/`wan6` metric 为 `10`
 - 5G SIM 备用：QModem 生成的 `USB`/`USBv6` metric 为 `50`
 - 首次启动时清理固件内的 QModem 和 video 软件源条目
