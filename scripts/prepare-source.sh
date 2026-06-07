@@ -11,7 +11,6 @@ INCLUDE_PASSWALL="${INCLUDE_PASSWALL:-false}"
 INCLUDE_MOSDNS="${INCLUDE_MOSDNS:-false}"
 INCLUDE_UPNP="${INCLUDE_UPNP:-false}"
 INCLUDE_HOMEPROXY="${INCLUDE_HOMEPROXY:-false}"
-INCLUDE_SMALL_PACKAGE="${INCLUDE_SMALL_PACKAGE:-false}"
 
 if [ -d "${SRC_DIR}/.git" ]; then
   echo "更新已有 OpenWrt 官方源码：${REF}"
@@ -50,8 +49,7 @@ append_feed_once() {
 need_small_package=false
 if [ "${INCLUDE_PASSWALL}" = "true" ] || \
    [ "${INCLUDE_MOSDNS}" = "true" ] || \
-   [ "${INCLUDE_HOMEPROXY}" = "true" ] || \
-   [ "${INCLUDE_SMALL_PACKAGE}" = "true" ]; then
+   [ "${INCLUDE_HOMEPROXY}" = "true" ]; then
   need_small_package=true
 fi
 

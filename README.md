@@ -30,7 +30,7 @@ https://github.com/openwrt/openwrt/pull/21398
 - HomeProxy：`kenzok8/small-package`
 - UPnP：OpenWrt 官方 feeds
 
-勾选 PassWall、MosDNS、HomeProxy 任意一个时，会自动添加 `kenzok8/small-package`。`small_package` 选项用于额外追加整个插件库。
+勾选 PassWall、MosDNS、HomeProxy 任意一个时，会自动添加 `kenzok8/small-package`。
 
 ## GitHub Actions 构建
 
@@ -42,10 +42,9 @@ https://github.com/openwrt/openwrt/pull/21398
 - `runner_type`: `github-hosted` 或 `self-hosted`
 - `qmodem`: 默认开启
 - `upnp`: 默认开启
-- `passwall`: 默认关闭
+- `passwall`: 默认开启
 - `homeproxy`: 默认关闭
-- `mosdns`: 默认关闭，勾选 luci-app-mosdns，相关依赖由软件包自动带入
-- `small_package`: 按需开启
+- `mosdns`: 默认开启，勾选 luci-app-mosdns，相关依赖由软件包自动带入
 - `create_release`: 默认开启
 - `make_jobs`: 留空，或填写 `4`、`8` 这类线程数
 
@@ -74,7 +73,7 @@ make -j"$(nproc)"
 
 - LAN IP：`192.168.10.1`
 - root 密码：`admin`
-- WiFi 名称：保留 OpenWrt 默认名称
+- WiFi 名称：H5000M，默认开启
 - WiFi 密码：`1234567890`
 - 有线 WAN 优先：`wan`/`wan6` metric 为 `10`
 - 5G SIM 备用：QModem 生成的 `USB`/`USBv6` metric 为 `50`

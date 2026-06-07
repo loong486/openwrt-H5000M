@@ -33,7 +33,7 @@ on:
         description: "3. PassWall：代理插件"
         required: true
         type: boolean
-        default: false
+        default: true
       homeproxy:
         description: "4. HomeProxy：代理插件"
         required: true
@@ -43,12 +43,7 @@ on:
         description: "5. MosDNS：DNS 分流插件"
         required: true
         type: boolean
-        default: false
-      small_package:
-        description: 额外插件库，勾选 3/4/5 时自动添加
-        required: true
-        type: boolean
-        default: false
+        default: true
       create_release:
         description: 发布 Releases
         required: true
@@ -91,7 +86,6 @@ jobs:
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_UPNP: ${{ inputs.upnp && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
-          INCLUDE_SMALL_PACKAGE: ${{ inputs.small_package && 'true' || 'false' }}
         run: bash ./scripts/prepare-source.sh "${{ inputs.openwrt_ref }}"
 
       - name: 更新软件源
@@ -214,7 +208,6 @@ jobs:
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_UPNP: ${{ inputs.upnp && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
-          INCLUDE_SMALL_PACKAGE: ${{ inputs.small_package && 'true' || 'false' }}
         run: bash ./scripts/prepare-source.sh "${{ inputs.openwrt_ref }}"
 
       - name: 更新软件源

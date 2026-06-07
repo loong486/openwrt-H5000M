@@ -33,7 +33,13 @@ if ! uci -q show wireless | grep -q '=wifi-iface'; then
 	wifi config >/dev/null 2>&1 || true
 fi
 
+for radio in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-device$/\1/p'); do
+	uci -q set "${radio}.disabled=0"
+done
+
 for section in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-iface$/\1/p'); do
+	uci -q set "${section}.disabled=0"
+	uci -q set "${section}.ssid=H5000M"
 	uci -q set "${section}.encryption=psk2"
 	uci -q set "${section}.key=1234567890"
 done
