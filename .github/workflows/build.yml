@@ -209,8 +209,16 @@ jobs:
         run: |
           mkdir -p "${CCACHE_DIR}" "${DL_DIR}"
           ccache --set-config=max_size=80G || ccache -M 80G
-          git config --global http.proxy "${http_proxy:-http://127.0.0.1:10808}"
-          git config --global https.proxy "${https_proxy:-http://127.0.0.1:10808}"
+          if [ -n "${http_proxy:-}" ]; then
+            git config --global http.proxy "${http_proxy}"
+          else
+            git config --global --unset-all http.proxy || true
+          fi
+          if [ -n "${https_proxy:-}" ]; then
+            git config --global https.proxy "${https_proxy}"
+          else
+            git config --global --unset-all https.proxy || true
+          fi
           echo "源码包缓存目录：${DL_DIR}"
           echo "编译缓存目录：${CCACHE_DIR}"
           ccache -s -v | sed -n '1,80p'
