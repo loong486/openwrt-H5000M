@@ -209,14 +209,39 @@ jobs:
         run: |
           mkdir -p "${CCACHE_DIR}" "${DL_DIR}"
           ccache --set-config=max_size=80G || ccache -M 80G
-          if [ -n "${http_proxy:-}" ]; then
+
+          if [ -n "${http_proxy:-}" ] || [ -n "${https_proxy:-}" ]; then
+            proxy_url="${https_proxy:-${http_proxy:-}}"
+            echo "使用外部传入的代理：${proxy_url}"
+          else
+            proxy_url=""
+            if command -v ip >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+              host_gateway="$(ip route | sed -n 's/^default via \([^ ]*\).*/\1/p' | head -n 1)"
+              candidate_proxy="http://${host_gateway}:7890"
+              if [ -n "${host_gateway}" ] && curl -fsSI --connect-timeout 8 --proxy "${candidate_proxy}" https://github.com >/dev/null 2>&1; then
+                proxy_url="${candidate_proxy}"
+                echo "检测到本机 ShellCrash 代理：${proxy_url}"
+              else
+                echo "未检测到可用的本机 ShellCrash 代理，使用直连。"
+              fi
+            fi
+          fi
+
+          if [ -n "${proxy_url}" ]; then
+            export http_proxy="${http_proxy:-${proxy_url}}"
+            export https_proxy="${https_proxy:-${proxy_url}}"
+            export HTTP_PROXY="${HTTP_PROXY:-${http_proxy}}"
+            export HTTPS_PROXY="${HTTPS_PROXY:-${https_proxy}}"
             git config --global http.proxy "${http_proxy}"
+            git config --global https.proxy "${https_proxy}"
+            {
+              echo "http_proxy=${http_proxy}"
+              echo "https_proxy=${https_proxy}"
+              echo "HTTP_PROXY=${HTTP_PROXY}"
+              echo "HTTPS_PROXY=${HTTPS_PROXY}"
+            } >> "${GITHUB_ENV}"
           else
             git config --global --unset-all http.proxy || true
-          fi
-          if [ -n "${https_proxy:-}" ]; then
-            git config --global https.proxy "${https_proxy}"
-          else
             git config --global --unset-all https.proxy || true
           fi
           echo "源码包缓存目录：${DL_DIR}"
