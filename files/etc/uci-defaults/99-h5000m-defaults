@@ -128,18 +128,40 @@ if ! uci -q show wireless | grep -q '=wifi-iface'; then
 fi
 
 for radio in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-device$/\1/p'); do
-	uci -q set "${radio}.disabled=0"
-	uci -q set "${radio}.country=CN"
+	band="$(uci -q get "${radio}.band")"
+	uci -q set "${radio}.country=US"
+	uci -q set "${radio}.channel=auto"
+	case "${band}" in
+		2g)
+			uci -q set "${radio}.disabled=1"
+			uci -q set "${radio}.htmode=EHT40"
+			;;
+		5g)
+			uci -q set "${radio}.disabled=0"
+			uci -q set "${radio}.htmode=EHT160"
+			;;
+		*)
+			uci -q set "${radio}.disabled=0"
+			;;
+	esac
 done
 
 wifi_index=2
 for section in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-iface$/\1/p'); do
 	device="$(uci -q get "${section}.device")"
 	band="$(uci -q get "wireless.${device}.band")"
-	uci -q set "${section}.disabled=0"
 	uci -q set "${section}.ssid=H5000M"
-	uci -q set "${section}.encryption=psk2"
+	uci -q set "${section}.encryption=sae-mixed"
 	uci -q set "${section}.key=1234567890"
+	uci -q set "${section}.ieee80211w=1"
+	case "${band}" in
+		2g)
+			uci -q set "${section}.disabled=1"
+			;;
+		*)
+			uci -q set "${section}.disabled=0"
+			;;
+	esac
 	if valid_mac "${lan_mac:-}"; then
 		case "${band}" in
 			2g)
