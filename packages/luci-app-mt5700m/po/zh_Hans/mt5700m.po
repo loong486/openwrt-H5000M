@@ -259,8 +259,8 @@ msgstr "现在开始固件升级？升级过程中请勿断电。"
 msgid "Start Upgrade"
 msgstr "开始升级"
 
-msgid "Configure the AT channel used by the native LuCI pages. Auto mode prefers the QModem AT serial port and falls back to the network AT endpoint."
-msgstr "配置 LuCI 原生页面使用的 AT 通道。自动模式会优先使用 QModem 发现的 AT 串口，找不到时再回退到网络 AT 接口。"
+msgid "Configure the AT channel used by the native LuCI pages. Auto mode tries the modem gateway network AT endpoint first, then falls back to the QModem AT serial port."
+msgstr "配置 LuCI 原生页面使用的 AT 通道。自动模式会优先尝试模块网关上的网络 AT 接口，失败后再回退到 QModem 发现的 AT 串口。"
 
 msgid "AT Channel"
 msgstr "AT 通道"

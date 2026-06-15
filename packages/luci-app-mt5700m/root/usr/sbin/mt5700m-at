@@ -43,6 +43,55 @@ run_with_timeout() {
 	fi
 }
 
+detect_modem_gateway() {
+	local gateway
+
+	command -v ip >/dev/null 2>&1 || return 1
+
+	gateway="$(ip -4 route show default 2>/dev/null | awk '
+		$0 ~ / dev (eth2|usb|wwan|wwan0|qmimux|rmnet|mhi|USB)/ {
+			for (i = 1; i <= NF; i++) {
+				if ($i == "via") {
+					print $(i + 1)
+					exit
+				}
+			}
+		}
+	')"
+
+	[ -n "${gateway}" ] || gateway="$(ip -4 route show 10.0.0.0/8 2>/dev/null | awk '
+		$0 ~ / dev (eth2|usb|wwan|wwan0|qmimux|rmnet|mhi|USB)/ {
+			print "10.0.0.1"
+			exit
+		}
+	')"
+
+	[ -n "${gateway}" ] || return 1
+	printf '%s\n' "${gateway}"
+}
+
+network_hosts() {
+	local gateway
+
+	gateway="$(detect_modem_gateway || true)"
+
+	if [ -n "${gateway}" ]; then
+		printf '%s\n' "${gateway}"
+	fi
+
+	if [ -n "${host}" ] && [ "${host}" != "${gateway}" ]; then
+		printf '%s\n' "${host}"
+	fi
+
+	if [ "${host}" != "192.168.8.1" ] && [ "${gateway}" != "192.168.8.1" ]; then
+		printf '%s\n' "192.168.8.1"
+	fi
+
+	if [ "${host}" != "10.0.0.1" ] && [ "${gateway}" != "10.0.0.1" ]; then
+		printf '%s\n' "10.0.0.1"
+	fi
+}
+
 detect_qmodem_at_port() {
 	local candidate
 
@@ -62,9 +111,10 @@ detect_qmodem_at_port() {
 
 at_network_cmd() {
 	local command="$1"
+	local target_host="${2:-${host}}"
 
 	if command -v nc >/dev/null 2>&1; then
-		printf '%s\r' "${command}" | run_with_timeout "${timeout_s}" nc "${host}" "${port}" 2>/dev/null
+		printf '%s\r' "${command}" | run_with_timeout "${timeout_s}" nc "${target_host}" "${port}" 2>/dev/null
 		return $?
 	fi
 
@@ -111,7 +161,7 @@ at_serial_cmd() {
 
 at_cmd() {
 	local command="$1"
-	local device
+	local device target
 
 	[ "${enabled}" = "1" ] || return 2
 	command="$(printf '%s' "${command}" | tr -d '\000\r\n')"
@@ -128,10 +178,16 @@ at_cmd() {
 			return $?
 			;;
 		network)
-			at_network_cmd "${command}"
-			return $?
+			for target in $(network_hosts); do
+				at_network_cmd "${command}" "${target}" && return 0
+			done
+			return 1
 			;;
 		auto)
+			for target in $(network_hosts); do
+				at_network_cmd "${command}" "${target}" && return 0
+			done
+
 			device="$(detect_qmodem_at_port)"
 			if [ -n "${device}" ]; then
 				at_serial_cmd "${command}" "${device}"
@@ -541,7 +597,9 @@ case "${1:-status}" in
 		echo "at_port=${detected_at_port:-${at_port}}"
 		echo "host=${host}"
 		echo "port=${port}"
-		if [ "${mode}" = "network" ] || { [ "${mode}" = "auto" ] && [ -z "${detected_at_port}" ]; }; then
+		detected_gateway="$(detect_modem_gateway || true)"
+		echo "detected_gateway=${detected_gateway}"
+		if [ "${mode}" = "network" ] || { [ "${mode}" = "auto" ] && [ -n "${detected_gateway}" ]; }; then
 			echo "channel=network"
 		else
 			echo "channel=serial"
