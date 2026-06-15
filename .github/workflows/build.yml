@@ -165,9 +165,18 @@ jobs:
       - name: 关闭调试工具链
         working-directory: openwrt
         run: |
-          ./scripts/config --file .config --disable GDB
-          ./scripts/config --file .config --disable GDB_PYTHON
+          sed -i \
+            -e '/^CONFIG_GDB=/d' \
+            -e '/^# CONFIG_GDB is not set/d' \
+            -e '/^CONFIG_GDB_PYTHON=/d' \
+            -e '/^# CONFIG_GDB_PYTHON is not set/d' \
+            .config
+          {
+            echo "# CONFIG_GDB is not set"
+            echo "# CONFIG_GDB_PYTHON is not set"
+          } >> .config
           make defconfig
+          grep -E '^(CONFIG_GDB|CONFIG_GDB_PYTHON)=|^# CONFIG_GDB' .config || true
 
       - name: 检查插件
         env:
