@@ -1,7 +1,14 @@
 {
-	"admin/services/mt5700m": {
+	"admin/modem": {
+		"title": "Modem",
+		"order": 25,
+		"action": {
+			"type": "firstchild"
+		}
+	},
+	"admin/modem/mt5700m": {
 		"title": "MT5700M Management",
-		"order": 55,
+		"order": 20,
 		"action": {
 			"type": "firstchild"
 		},
@@ -10,7 +17,7 @@
 			"uci": { "mt5700m": true }
 		}
 	},
-	"admin/services/mt5700m/webui": {
+	"admin/modem/mt5700m/webui": {
 		"title": "Native WebUI",
 		"order": 10,
 		"action": {
