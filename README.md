@@ -34,7 +34,7 @@ https://github.com/openwrt/openwrt/pull/21398
 - UPnP：OpenWrt 官方 feeds
 - ttyd / luci-app-ttyd：OpenWrt 官方 feeds
 - vnStat2 / luci-app-vnstat2：OpenWrt 官方 feeds
-- MT5700M 管理页面：本项目自带 LuCI 原生实现，参考 `inotdream/mt5700webui-openwrt-server` 和 `Coming-2022/mt5700m_at_control` 的 MT5700M 网络 AT 口与常用 AT 命令，不直接集成其独立 WebUI。目标是把完整功能逐步重写进 `luci-app-mt5700m`。
+- MT5700M 管理页面：本项目自带 `luci-app-mt5700m`，参考 `inotdream/mt5700webui-openwrt-server`、`vadimrew/mt5700webui-openwrt-server` 和 `Coming-2022/mt5700m_at_control`。当前同时提供 LuCI 原生页面和内嵌原生 WebUI，默认通过本机 WebSocket/AT 代理访问 MT5700M，避免直接占用 QModem 正在使用的串口。
 
 勾选 PassWall、MosDNS、HomeProxy 任意一个时，会自动添加 `kenzok8/small-package`。
 
@@ -53,7 +53,7 @@ https://github.com/openwrt/openwrt/pull/21398
 - `homeproxy`: 默认关闭
 - `mosdns`: 默认开启，勾选 `luci-app-mosdns`，相关依赖由软件包自动带入
 - `vnstat`: 默认开启，勾选 `luci-app-vnstat2`、`vnstat2`、`vnstati2`，用于累计流量统计
-- `mt5700m`: 默认开启，添加 LuCI 原生 `MT5700M 管理` 页面，用于访问模块网络 AT 接口，当前包含状态、网络/小区、锁频、短信、系统/FOTA 和 AT 终端页面
+- `mt5700m`: 默认开启，添加 `移动网络 / MT5700M 管理` 页面，当前包含内嵌 WebUI，并通过本机 WebSocket/AT 代理访问模块
 - `create_release`: 默认开启
 - `make_jobs`: 留空，或填写 `4`、`8` 这类线程数
 
@@ -68,11 +68,28 @@ openwrt/bin/targets/mediatek/filogic
 请在 Linux、WSL2 或 Linux 编译机上运行：
 
 ```sh
+INCLUDE_QMODEM_ORIGINAL=true \
+INCLUDE_QMODEM_NEXT=false \
+INCLUDE_PASSWALL=true \
+INCLUDE_MOSDNS=true \
+INCLUDE_UPNP=true \
+INCLUDE_HOMEPROXY=false \
 bash ./scripts/prepare-source.sh v25.12.4
+
 cd openwrt
 ./scripts/feeds update -a
 ./scripts/feeds install -a
+
+INCLUDE_QMODEM_ORIGINAL=true \
+INCLUDE_QMODEM_NEXT=false \
+INCLUDE_PASSWALL=true \
+INCLUDE_MOSDNS=true \
+INCLUDE_UPNP=true \
+INCLUDE_HOMEPROXY=false \
+INCLUDE_VNSTAT=true \
+INCLUDE_MT5700M=true \
 bash ../scripts/apply-package-options.sh
+
 make defconfig
 make download -j8
 make -j"$(nproc)"
@@ -84,9 +101,12 @@ make -j"$(nproc)"
 - root 密码：`admin`
 - 默认时区：`Asia/Shanghai`
 - LuCI 默认语言：`auto`，跟随浏览器和系统默认语言
-- WiFi 名称：`H5000M`，默认开启
+- WiFi 名称：`H5000M`
 - WiFi 密码：`1234567890`
-- WiFi 区域：`CN`
+- WiFi 区域：`US`
+- WiFi 加密：`WPA2-PSK/WPA3-SAE Mixed Mode`（UCI 为 `sae-mixed`）
+- 2.4G WiFi：默认禁用，默认带宽 `EHT40`，不由本项目强制指定信道
+- 5G WiFi：默认启用，默认带宽 `EHT160`，不由本项目强制指定信道
 - MAC 派生：优先使用 U-Boot `ethaddr`，失效时使用 eMMC CID 稳定兜底；ETH1 / 2.4G WiFi / 5G WiFi 分别使用 `base + 1/+2/+3`
 - 有线 WAN 优先：`wan` / `wan6` metric 为 `10`
 - 5G SIM 备用：QModem 生成的 `USB` / `USBv6` metric 为 `50`
@@ -98,15 +118,16 @@ make -j"$(nproc)"
 
 内置 `luci-app-ttyd`，可在 LuCI 中打开 Web 终端，便于刷机后直接执行诊断命令。
 
-内置 `luci-app-mt5700m`，可在 LuCI 的“服务 / MT5700M 管理”中查看模块连接、SIM、运营商、信号、温度、网络/小区信息、LTE/NR 锁定状态，并提供锁频控制、短信中心、系统/FOTA 和 AT 终端。默认使用自动 AT 通道：优先读取 QModem 发现的串口 AT 端口，例如 `/dev/ttyUSB1`，找不到串口时再使用网络 TCP AT 口；具体通道可在“设置”页调整。
+内置 `luci-app-mt5700m`，可在 LuCI 的“移动网络 / MT5700M 管理”中打开 MT5700M 管理页面。当前默认通过本机 WebSocket/AT 代理访问模块，状态查询和 AT 调试不会直接抢占 QModem 串口；页面中已包含状态、网络与小区信息、锁频控制、短信中心、系统/FOTA、设置和 AT 终端等功能。
 
 ## 本地 Runner
 
-当前 workflow 的本地 runner 缓存路径：
+当前 workflow 的本地 runner 下载缓存路径：
 
 ```text
 /home/builder/openwrt-h5000m-cache/dl
-/home/builder/openwrt-h5000m-cache/ccache
 ```
+
+为保证稳定复现，当前默认关闭 ccache；如果旧 runner 上还存在 `/home/builder/openwrt-h5000m-cache/ccache`，它只是历史缓存，默认构建不会使用。
 
 如果需要彻底重建本地 runner，建议先在 GitHub 仓库中移除旧 self-hosted runner，再在本地停止旧服务、删除旧 runner 目录和旧缓存目录，然后用新仓库名重新注册。
