@@ -152,6 +152,7 @@ CONFIG_PACKAGE_kmod-nft-nat=y
 CONFIG_PACKAGE_kmod-inet-diag=y
 CONFIG_PACKAGE_kmod-netlink-diag=y
 CONFIG_PACKAGE_kmod-tun=y
+CONFIG_PACKAGE_ip-full=y
 EOF
 fi
 
