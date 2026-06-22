@@ -166,6 +166,8 @@ if [ "${INCLUDE_MOSDNS}" = "true" ]; then
   echo "启用 MosDNS"
   append_config <<'EOF'
 CONFIG_PACKAGE_luci-app-mosdns=y
+CONFIG_PACKAGE_mosdns=y
+CONFIG_PACKAGE_dnsmasq-full=y
 EOF
 fi
 
