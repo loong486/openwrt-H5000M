@@ -50,15 +50,6 @@ CONFIG_PACKAGE_luci-i18n-h5000m-fancontrol-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-h5000m-netmode-zh-cn=y
 EOF
 
-if [ "${INCLUDE_MT5700M}" = "true" ]; then
-  echo "启用 MT5700M 原生管理页面"
-  append_config <<'EOF'
-CONFIG_PACKAGE_luci-app-mt5700m=y
-CONFIG_PACKAGE_luci-i18n-mt5700m-zh-cn=y
-CONFIG_PACKAGE_at-webserver=y
-EOF
-fi
-
 if [ "${INCLUDE_QMODEM_ORIGINAL}" = "true" ] && [ "${INCLUDE_QMODEM_NEXT}" = "true" ]; then
   echo "QModem 原版和 QModem Next 只能二选一，请关闭其中一个。"
   exit 1
