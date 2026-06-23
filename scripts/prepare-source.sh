@@ -38,6 +38,10 @@ done
 
 cp "${ROOT_DIR}/configs/h5000m.seed" "${SRC_DIR}/.config"
 
+# OpenWrt 25.x may carry the optional video feed. H5000M does not use it, and
+# GitHub-side TLS interruptions on this feed can fail the whole feed update.
+sed -i '/^[[:space:]]*src-git[[:space:]]\+video[[:space:]]/d' "${SRC_DIR}/feeds.conf.default"
+
 append_feed_once() {
   local feed_line="$1"
   local feed_name

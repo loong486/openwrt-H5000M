@@ -131,6 +131,12 @@ jobs:
           INCLUDE_VNSTAT: ${{ inputs.vnstat && 'true' || 'false' }}
           INCLUDE_MT5700M: ${{ inputs.mt5700m && 'true' || 'false' }}
         run: |
+          git config --global --unset-all http.proxy || true
+          git config --global --unset-all https.proxy || true
+          git config --global http.version HTTP/1.1
+          git config --global http.lowSpeedLimit 0
+          git config --global http.postBuffer 524288000
+
           for attempt in 1 2 3; do
             if ./scripts/feeds update -a; then
               break
