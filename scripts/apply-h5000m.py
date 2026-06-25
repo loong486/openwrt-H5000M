@@ -298,9 +298,9 @@ def main() -> int:
 
     text = read(network)
     mt7987_case = "\tmediatek,mt7987*)\n\t\tucidef_set_interfaces_lan_wan \"eth0 hnat\" eth1\n\t\t;;"
-    h5000m_case = "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth0 eth1\n\t\t;;\n"
+    h5000m_case = "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth1 eth0\n\t\t;;\n"
     for old_case in (
-        "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth1 eth0\n\t\t;;\n",
+        "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan eth0 eth1\n\t\t;;\n",
         "\thiveton,h5000m)\n\t\tucidef_set_interfaces_lan_wan \"eth0 hnat\" eth1\n\t\t;;\n",
     ):
         text = text.replace(old_case, h5000m_case)

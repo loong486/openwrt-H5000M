@@ -86,10 +86,10 @@ if valid_mac "${lan_mac}"; then
 
 	uci -q set network.eth0_dev='device'
 	uci -q set network.eth0_dev.name='eth0'
-	uci -q set network.eth0_dev.macaddr="${lan_mac}"
+	uci -q set network.eth0_dev.macaddr="${wan_mac}"
 	uci -q set network.eth1_dev='device'
 	uci -q set network.eth1_dev.name='eth1'
-	uci -q set network.eth1_dev.macaddr="${wan_mac}"
+	uci -q set network.eth1_dev.macaddr="${lan_mac}"
 	uci -q set network.wan.macaddr="${wan_mac}"
 	uci -q commit network
 else
