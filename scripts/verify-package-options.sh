@@ -8,6 +8,7 @@ CONFIG_FILE="${SRC_DIR}/.config"
 INCLUDE_QMODEM_ORIGINAL="${INCLUDE_QMODEM_ORIGINAL:-${INCLUDE_QMODEM:-false}}"
 INCLUDE_QMODEM_NEXT="${INCLUDE_QMODEM_NEXT:-false}"
 INCLUDE_PASSWALL2="${INCLUDE_PASSWALL2:-${INCLUDE_PASSWALL:-false}}"
+INCLUDE_PASSWALL="${INCLUDE_PASSWALL:-false}"
 INCLUDE_MOSDNS="${INCLUDE_MOSDNS:-false}"
 INCLUDE_UPNP="${INCLUDE_UPNP:-false}"
 INCLUDE_HOMEPROXY="${INCLUDE_HOMEPROXY:-false}"
@@ -169,12 +170,34 @@ if [ "${INCLUDE_PASSWALL2}" = "true" ]; then
   require_config "CONFIG_PACKAGE_kmod-tun"
 fi
 
+if [ "${INCLUDE_PASSWALL}" = "true" ]; then
+  reject_config "CONFIG_PACKAGE_luci-app-passwall2"
+  require_config "CONFIG_PACKAGE_luci-app-passwall"
+  require_config "CONFIG_PACKAGE_luci-app-passwall_NFT"
+  require_config "CONFIG_PACKAGE_xray-core"
+  require_config "CONFIG_PACKAGE_sing-box"
+  require_config "CONFIG_PACKAGE_tcping"
+  require_config "CONFIG_PACKAGE_v2ray-geoip"
+  require_config "CONFIG_PACKAGE_v2ray-geosite"
+  require_config "CONFIG_PACKAGE_v2ray-plugin"
+  require_config "CONFIG_PACKAGE_geoview"
+  require_config "CONFIG_PACKAGE_kmod-nft-socket"
+  require_config "CONFIG_PACKAGE_kmod-nft-tproxy"
+  require_config "CONFIG_PACKAGE_kmod-nft-nat"
+  require_config "CONFIG_PACKAGE_kmod-inet-diag"
+  require_config "CONFIG_PACKAGE_kmod-netlink-diag"
+  require_config "CONFIG_PACKAGE_kmod-tun"
+fi
+
 if [ "${INCLUDE_HOMEPROXY}" = "true" ]; then
   require_config "CONFIG_PACKAGE_luci-app-homeproxy"
 fi
 
 if [ "${INCLUDE_MOSDNS}" = "true" ]; then
   require_config "CONFIG_PACKAGE_luci-app-mosdns"
+  require_config "CONFIG_PACKAGE_mosdns"
+  require_config "CONFIG_PACKAGE_dnsmasq-full"
+  optional_config "CONFIG_PACKAGE_v2dat"
 fi
 
 if [ "${INCLUDE_VNSTAT}" = "true" ]; then
