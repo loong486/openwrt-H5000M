@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_DIR="${ROOT_DIR}/openwrt"
+SRC_DIR="${OPENWRT_SRC_DIR:-${ROOT_DIR}/openwrt}"
 REF="${1:-${OPENWRT_REF:-v25.12.4}}"
 REPO_URL="${OPENWRT_REPO:-https://github.com/openwrt/openwrt.git}"
 
@@ -14,13 +14,25 @@ INCLUDE_MOSDNS="${INCLUDE_MOSDNS:-false}"
 INCLUDE_UPNP="${INCLUDE_UPNP:-false}"
 INCLUDE_HOMEPROXY="${INCLUDE_HOMEPROXY:-false}"
 
+git config --global --unset-all http.proxy >/dev/null 2>&1 || true
+git config --global --unset-all https.proxy >/dev/null 2>&1 || true
+git config --global http.version HTTP/1.1
+git config --global http.lowSpeedLimit 0
+git config --global http.postBuffer 524288000
+
 if [ -d "${SRC_DIR}/.git" ]; then
   echo "更新已有 OpenWrt 官方源码：${REF}"
   git -C "${SRC_DIR}" remote set-url origin "${REPO_URL}"
-  git -C "${SRC_DIR}" fetch --tags --depth=1 origin "${REF}"
-  git -C "${SRC_DIR}" checkout --detach FETCH_HEAD
+  git -C "${SRC_DIR}" reset --hard HEAD
+  if git -C "${SRC_DIR}" rev-parse --verify --quiet "refs/tags/${REF}^{commit}" >/dev/null; then
+    git -C "${SRC_DIR}" checkout --detach "refs/tags/${REF}^{commit}"
+  else
+    git -C "${SRC_DIR}" fetch --tags --depth=1 origin "${REF}"
+    git -C "${SRC_DIR}" checkout --detach FETCH_HEAD
+  fi
 else
   echo "克隆 OpenWrt 官方源码：${REF}"
+  mkdir -p "$(dirname "${SRC_DIR}")"
   git clone --depth=1 --branch "${REF}" "${REPO_URL}" "${SRC_DIR}"
 fi
 
@@ -38,6 +50,10 @@ for patch in "${ROOT_DIR}"/patches/optional/*.patch; do
 done
 
 cp "${ROOT_DIR}/configs/h5000m.seed" "${SRC_DIR}/.config"
+
+# OpenWrt 25.x may carry the optional video feed. H5000M does not use it, and
+# GitHub-side TLS interruptions on this feed can fail the whole feed update.
+sed -i '/^[[:space:]]*src-git[[:space:]]\+video[[:space:]]/d' "${SRC_DIR}/feeds.conf.default"
 
 append_feed_once() {
   local feed_line="$1"

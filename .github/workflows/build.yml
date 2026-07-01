@@ -19,13 +19,18 @@ on:
         description: 编译线程，留空使用全部核心
         required: false
         default: ""
+      clean_build:
+        description: 清理本地增量编译目录后全量重编
+        required: true
+        type: boolean
+        default: false
       qmodem_original:
         description: "1. QModem 原版：5G 模块管理"
         required: true
         type: boolean
         default: true
       qmodem_next:
-        description: "2. QModem Next：新版界面/扩展功能"
+        description: "2. QModem Next：新版界面和扩展功能"
         required: true
         type: boolean
         default: false
@@ -83,14 +88,66 @@ env:
 
 jobs:
   build:
-    name: ${{ inputs.runner_type == 'self-hosted' && 'LXC 本地 runner 编译' || 'GitHub 托管机编译' }}
+    name: ${{ inputs.runner_type == 'self-hosted' && 'LXC 本地 runner 编译' || 'GitHub 托管机器编译' }}
     runs-on: ${{ fromJSON(inputs.runner_type == 'self-hosted' && '["self-hosted","Linux","X64","homelab","lxc","openwrt-h5000m"]' || '"ubuntu-24.04"') }}
     env:
       BUILD_DL_DIR: ${{ inputs.runner_type == 'self-hosted' && '/home/builder/openwrt-h5000m-cache/dl' || '' }}
+      OPENWRT_SRC_DIR: ${{ inputs.runner_type == 'self-hosted' && '/home/builder/openwrt-h5000m-build/openwrt' || '' }}
 
     steps:
       - name: 检出项目
-        uses: actions/checkout@v4
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git config --global --unset-all http.proxy || true
+          git config --global --unset-all https.proxy || true
+          git config --global http.version HTTP/1.1
+          git config --global protocol.version 1
+          git config --global http.lowSpeedLimit 0
+          git config --global http.postBuffer 524288000
+
+          repo_url="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          rm -rf .git
+          git init
+          git remote add origin "${repo_url}"
+          checkout_ok=0
+          for attempt in 1 2 3; do
+            if git fetch --depth=1 origin "${GITHUB_SHA}"; then
+              git checkout --force FETCH_HEAD
+              checkout_ok=1
+              break
+            fi
+            if [ "${attempt}" = "3" ]; then
+              echo "项目 Git 检出失败，改用 GitHub tarball 兜底。"
+              break
+            fi
+            echo "项目检出失败，等待后重试：${attempt}/3"
+            sleep $((attempt * 10))
+          done
+
+          if [ "${checkout_ok}" != "1" ]; then
+            tmp_archive="$(mktemp -d)"
+            curl --http1.1 --fail --location --retry 5 --retry-delay 5 --retry-all-errors \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/tarball/${GITHUB_SHA}" \
+              -o "${tmp_archive}/repo.tar.gz"
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+            tar -xzf "${tmp_archive}/repo.tar.gz" -C "${tmp_archive}"
+            extracted_dir="$(find "${tmp_archive}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+            cp -a "${extracted_dir}/." .
+            rm -rf "${tmp_archive}"
+          fi
+
+      - name: 准备本地增量编译目录
+        if: ${{ inputs.runner_type == 'self-hosted' }}
+        run: |
+          if [ "${{ inputs.clean_build }}" = "true" ]; then
+            echo "清理本地增量编译目录：${OPENWRT_SRC_DIR}"
+            rm -rf "${OPENWRT_SRC_DIR}"
+          fi
+          mkdir -p "$(dirname "${OPENWRT_SRC_DIR}")"
+          rm -rf openwrt
 
       - name: 准备 WiFi EEPROM 自动刷写文件
         if: ${{ inputs.eeprom_autoflash }}
@@ -124,7 +181,12 @@ jobs:
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
           INCLUDE_VNSTAT: ${{ inputs.vnstat && 'true' || 'false' }}
           INCLUDE_MT5700M: ${{ inputs.mt5700m && 'true' || 'false' }}
-        run: bash ./scripts/prepare-source.sh "${{ inputs.openwrt_ref }}"
+        run: |
+          bash ./scripts/prepare-source.sh "${{ inputs.openwrt_ref }}"
+          if [ -n "${OPENWRT_SRC_DIR}" ]; then
+            rm -rf openwrt
+            ln -s "${OPENWRT_SRC_DIR}" openwrt
+          fi
 
       - name: 更新软件源
         working-directory: openwrt
@@ -138,6 +200,12 @@ jobs:
           INCLUDE_VNSTAT: ${{ inputs.vnstat && 'true' || 'false' }}
           INCLUDE_MT5700M: ${{ inputs.mt5700m && 'true' || 'false' }}
         run: |
+          git config --global --unset-all http.proxy || true
+          git config --global --unset-all https.proxy || true
+          git config --global http.version HTTP/1.1
+          git config --global http.lowSpeedLimit 0
+          git config --global http.postBuffer 524288000
+
           for attempt in 1 2 3; do
             if ./scripts/feeds update -a; then
               break
@@ -151,8 +219,7 @@ jobs:
             fi
             sleep 5
           done
-          cd ..
-          bash ./scripts/install-feeds.sh
+          bash "${GITHUB_WORKSPACE}/scripts/install-feeds.sh"
 
       - name: 修复第三方 feed
         run: bash ./scripts/patch-feeds.sh
@@ -170,7 +237,7 @@ jobs:
           INCLUDE_MT5700M: ${{ inputs.mt5700m && 'true' || 'false' }}
         run: bash ./scripts/apply-package-options.sh
 
-      - name: 配置本地 runner 缓存
+      - name: 配置本地下载缓存
         if: ${{ inputs.runner_type == 'self-hosted' }}
         run: |
           mkdir -p "${BUILD_DL_DIR}"

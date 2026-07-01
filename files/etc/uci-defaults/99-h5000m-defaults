@@ -20,6 +20,14 @@ if [ -f /etc/config/luci ]; then
 	uci -q commit luci
 fi
 
+if [ -f /etc/config/upnpd ]; then
+	logger -t h5000m-defaults "Enable UPnP and NAT-PMP by default"
+	uci -q set upnpd.config.enabled='1'
+	uci -q set upnpd.config.enable_natpmp='1'
+	uci -q set upnpd.config.enable_upnp='1'
+	uci -q commit upnpd
+fi
+
 read_uboot_env() {
 	local key="$1"
 	[ -e /dev/mmcblk0p1 ] || return 1
@@ -77,6 +85,16 @@ uci -q set network.lan.proto='static'
 uci -q set network.lan.ipaddr='192.168.10.1'
 uci -q set network.lan.netmask='255.255.255.0'
 
+logger -t h5000m-defaults "Apply official H5000M Ethernet layout: eth1 LAN, eth0 WAN"
+for section in $(uci -q show network | sed -n 's/^\(network\.[^=]*\)=device$/\1/p'); do
+	if [ "$(uci -q get "${section}.name")" = "br-lan" ]; then
+		uci -q set "${section}.ports=eth1"
+	fi
+done
+uci -q set network.lan.device='br-lan'
+uci -q set network.wan.device='eth0'
+uci -q set network.wan6.device='eth0'
+
 logger -t h5000m-defaults "Apply MAC addresses derived from U-Boot ethaddr"
 lan_mac="$(get_base_mac || true)"
 if valid_mac "${lan_mac}"; then
@@ -86,10 +104,10 @@ if valid_mac "${lan_mac}"; then
 
 	uci -q set network.eth0_dev='device'
 	uci -q set network.eth0_dev.name='eth0'
-	uci -q set network.eth0_dev.macaddr="${lan_mac}"
+	uci -q set network.eth0_dev.macaddr="${wan_mac}"
 	uci -q set network.eth1_dev='device'
 	uci -q set network.eth1_dev.name='eth1'
-	uci -q set network.eth1_dev.macaddr="${wan_mac}"
+	uci -q set network.eth1_dev.macaddr="${lan_mac}"
 	uci -q set network.wan.macaddr="${wan_mac}"
 	uci -q commit network
 else
@@ -122,7 +140,7 @@ else
 	(printf 'admin\nadmin\n' | passwd root) >/dev/null 2>&1 || true
 fi
 
-logger -t h5000m-defaults "Set default WiFi SSID and password"
+logger -t h5000m-defaults "Set separated default WiFi SSIDs and password"
 if ! uci -q show wireless | grep -q '=wifi-iface'; then
 	wifi config >/dev/null 2>&1 || true
 fi
@@ -149,9 +167,19 @@ wifi_index=2
 for section in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-iface$/\1/p'); do
 	device="$(uci -q get "${section}.device")"
 	band="$(uci -q get "wireless.${device}.band")"
-	uci -q set "${section}.ssid=H5000M"
+	case "${band}" in
+		2g)
+			uci -q set "${section}.ssid=H5000M-2G"
+			;;
+		5g|6g)
+			uci -q set "${section}.ssid=H5000M-5G"
+			;;
+		*)
+			uci -q set "${section}.ssid=H5000M"
+			;;
+	esac
 	uci -q set "${section}.encryption=sae-mixed"
-	uci -q set "${section}.key=1234567890"
+	uci -q set "${section}.key=77778888"
 	uci -q set "${section}.ieee80211w=1"
 	uci -q set "${section}.ieee80211k=1"
 	uci -q set "${section}.rrm_neighbor_report=1"
@@ -177,27 +205,6 @@ for section in $(uci -q show wireless | sed -n 's/^\(wireless\.[^.]*\)=wifi-ifac
 	fi
 done
 uci -q commit wireless
-
-if [ -f /etc/config/usteer ]; then
-	logger -t h5000m-defaults "Enable usteer band steering defaults"
-	uci -q get usteer.@usteer[0] >/dev/null 2>&1 || uci -q add usteer usteer >/dev/null
-	uci -q set usteer.@usteer[0].network='lan'
-	uci -q set usteer.@usteer[0].syslog='1'
-	uci -q set usteer.@usteer[0].local_mode='1'
-	uci -q set usteer.@usteer[0].assoc_steering='1'
-	uci -q set usteer.@usteer[0].probe_steering='1'
-	uci -q set usteer.@usteer[0].band_steering_threshold='0'
-	uci -q set usteer.@usteer[0].band_steering_interval='30000'
-	uci -q set usteer.@usteer[0].band_steering_min_snr='-60'
-	uci -q set usteer.@usteer[0].band_steering_signal_threshold='3'
-	uci -q set usteer.@usteer[0].signal_diff_threshold='8'
-	uci -q set usteer.@usteer[0].link_measurement_interval='30000'
-	uci -q delete usteer.@usteer[0].ssid_list
-	uci -q add_list usteer.@usteer[0].ssid_list='H5000M'
-	uci -q commit usteer
-	/etc/init.d/usteer enable >/dev/null 2>&1 || true
-	/etc/init.d/usteer restart >/dev/null 2>&1 || true
-fi
 
 logger -t h5000m-defaults "Remove build-only apk feed entries"
 if [ -f /etc/apk/repositories.d/distfeeds.list ]; then
