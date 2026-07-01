@@ -39,28 +39,33 @@ on:
         required: true
         type: boolean
         default: true
+      passwall:
+        description: "5. PassWall：代理与分流"
+        required: true
+        type: boolean
+        default: false
       homeproxy:
-        description: "5. HomeProxy：代理插件"
+        description: "6. HomeProxy：代理插件"
         required: true
         type: boolean
         default: false
       mosdns:
-        description: "6. MosDNS：DNS 分流插件"
+        description: "7. MosDNS：DNS 分流插件"
         required: true
         type: boolean
         default: false
       vnstat:
-        description: "7. vnStat2：累计流量统计"
+        description: "8. vnStat2：累计流量统计"
         required: true
         type: boolean
         default: true
       mt5700m:
-        description: "8. MT5700M：原生管理页面"
+        description: "9. MT5700M：原生管理页面"
         required: true
         type: boolean
         default: true
       eeprom_autoflash:
-        description: "9. EEPROM：首次启动自动写入 WiFi 校准数据"
+        description: "10. EEPROM：首次启动自动写入 WiFi 校准数据"
         required: true
         type: boolean
         default: false
@@ -113,6 +118,7 @@ jobs:
           INCLUDE_QMODEM_ORIGINAL: ${{ inputs.qmodem_original && 'true' || 'false' }}
           INCLUDE_QMODEM_NEXT: ${{ inputs.qmodem_next && 'true' || 'false' }}
           INCLUDE_PASSWALL2: ${{ inputs.passwall2 && 'true' || 'false' }}
+          INCLUDE_PASSWALL: ${{ inputs.passwall && 'true' || 'false' }}
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_UPNP: ${{ inputs.upnp && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
@@ -126,6 +132,7 @@ jobs:
           INCLUDE_QMODEM_ORIGINAL: ${{ inputs.qmodem_original && 'true' || 'false' }}
           INCLUDE_QMODEM_NEXT: ${{ inputs.qmodem_next && 'true' || 'false' }}
           INCLUDE_PASSWALL2: ${{ inputs.passwall2 && 'true' || 'false' }}
+          INCLUDE_PASSWALL: ${{ inputs.passwall && 'true' || 'false' }}
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
           INCLUDE_VNSTAT: ${{ inputs.vnstat && 'true' || 'false' }}
@@ -155,6 +162,7 @@ jobs:
           INCLUDE_QMODEM_ORIGINAL: ${{ inputs.qmodem_original && 'true' || 'false' }}
           INCLUDE_QMODEM_NEXT: ${{ inputs.qmodem_next && 'true' || 'false' }}
           INCLUDE_PASSWALL2: ${{ inputs.passwall2 && 'true' || 'false' }}
+          INCLUDE_PASSWALL: ${{ inputs.passwall && 'true' || 'false' }}
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_UPNP: ${{ inputs.upnp && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
@@ -208,6 +216,7 @@ jobs:
           INCLUDE_QMODEM_ORIGINAL: ${{ inputs.qmodem_original && 'true' || 'false' }}
           INCLUDE_QMODEM_NEXT: ${{ inputs.qmodem_next && 'true' || 'false' }}
           INCLUDE_PASSWALL2: ${{ inputs.passwall2 && 'true' || 'false' }}
+          INCLUDE_PASSWALL: ${{ inputs.passwall && 'true' || 'false' }}
           INCLUDE_MOSDNS: ${{ inputs.mosdns && 'true' || 'false' }}
           INCLUDE_UPNP: ${{ inputs.upnp && 'true' || 'false' }}
           INCLUDE_HOMEPROXY: ${{ inputs.homeproxy && 'true' || 'false' }}
