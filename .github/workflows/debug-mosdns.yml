@@ -1,0 +1,117 @@
+name: Debug MosDNS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Show Repository Info
+        run: |
+          echo "===== Current Repository ====="
+          pwd
+          ls -la
+
+      - name: Show feeds.conf.default
+        run: |
+          if [ -f openwrt/feeds.conf.default ]; then
+            echo "===== openwrt/feeds.conf.default ====="
+            cat openwrt/feeds.conf.default
+          elif [ -f feeds.conf.default ]; then
+            echo "===== feeds.conf.default ====="
+            cat feeds.conf.default
+          else
+            echo "feeds.conf.default not found"
+          fi
+
+      - name: Update Feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Debug MosDNS
+        run: |
+          cd openwrt
+
+          echo
+          echo "==============================="
+          echo " MosDNS Package Location "
+          echo "==============================="
+          find feeds package -type d -name "mosdns"
+
+          echo
+          echo "==============================="
+          echo " LuCI MosDNS Location "
+          echo "==============================="
+          find feeds package -type d -name "luci-app-mosdns"
+
+          echo
+          echo "==============================="
+          echo " MosDNS Makefile "
+          echo "==============================="
+          find feeds package -path "*/mosdns/Makefile" \
+            -exec echo "FILE: {}" \; \
+            -exec sed -n '1,250p' {} \;
+
+          echo
+          echo "==============================="
+          echo " Search adblock_set "
+          echo "==============================="
+          grep -R "adblock_set" feeds package -n || true
+
+          echo
+          echo "==============================="
+          echo " Search adblock-set "
+          echo "==============================="
+          grep -R "adblock-set" feeds package -n || true
+
+          echo
+          echo "==============================="
+          echo " Search blocklist "
+          echo "==============================="
+          grep -R "blocklist" feeds package -n || true
+
+          echo
+          echo "==============================="
+          echo " Search plugin type "
+          echo "==============================="
+          grep -R "plugin type" feeds package -n || true
+
+          echo
+          echo "==============================="
+          echo " Search luci-app-mosdns "
+          echo "==============================="
+          grep -R "luci-app-mosdns" feeds package -n || true
+
+          echo
+          echo "==============================="
+          echo " Search mosdns references "
+          echo "==============================="
+          grep -R "mosdns" feeds package -n | head -300 || true
+
+          echo
+          echo "==============================="
+          echo " .config "
+          echo "==============================="
+          if [ -f .config ]; then
+            grep MOSDNS .config || true
+          else
+            echo ".config not found"
+          fi
+
+          echo
+          echo "==============================="
+          echo " Feed List "
+          echo "==============================="
+          ./scripts/feeds list -f
+
+          echo
+          echo "==============================="
+          echo " Finished "
+          echo "==============================="
