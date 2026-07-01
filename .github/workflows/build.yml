@@ -1,4 +1,4 @@
-Name: 构建 openwrt-H5000M 固件
+name: 构建 openwrt-H5000M 固件
 
 on:
   workflow_dispatch:
