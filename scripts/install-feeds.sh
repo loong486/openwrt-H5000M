@@ -79,7 +79,19 @@ if [ "${INCLUDE_PASSWALL}" = "true" ]; then
 fi
 
 if [ "${INCLUDE_MOSDNS}" = "true" ]; then
-  install_packages small_package luci-app-mosdns mosdns v2dat geoview
+  # 仅从 feed 安装必要的依赖组件
+  install_packages small_package v2dat geoview
+
+  # 删除所有 feed 中可能造成版本冲突的 mosdns 和 luci 组件
+  echo "Cleaning up conflicting mosdns versions..."
+  rm -rf feeds/packages/net/mosdns
+  rm -rf feeds/luci/applications/luci-app-mosdns
+  rm -rf feeds/small_package/mosdns
+  rm -rf feeds/small_package/luci-app-mosdns
+
+  # 拉取高度匹配的 sbwml v5 源码，解决 adblock-set 报错
+  echo "Cloning sbwml/luci-app-mosdns (v5)..."
+  git clone -b v5 https://github.com/sbwml/luci-app-mosdns package/mosdns
 fi
 
 if [ "${INCLUDE_HOMEPROXY}" = "true" ]; then
