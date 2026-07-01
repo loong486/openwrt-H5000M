@@ -173,7 +173,7 @@ fi
 if [ "${INCLUDE_PASSWALL}" = "true" ]; then
   reject_config "CONFIG_PACKAGE_luci-app-passwall2"
   require_config "CONFIG_PACKAGE_luci-app-passwall"
-  require_config "CONFIG_PACKAGE_luci-app-passwall_NFT"
+  optional_config "CONFIG_PACKAGE_luci-app-passwall_NFT"
   require_config "CONFIG_PACKAGE_xray-core"
   require_config "CONFIG_PACKAGE_sing-box"
   require_config "CONFIG_PACKAGE_tcping"
