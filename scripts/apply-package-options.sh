@@ -161,7 +161,6 @@ if [ "${INCLUDE_PASSWALL}" = "true" ]; then
   echo "启用 PassWall"
   append_config <<'EOF'
 CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-passwall_NFT=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
