@@ -410,6 +410,17 @@ jobs:
           cd feeds/small_package
           git rev-parse HEAD
           git log -1 --oneline
+
+      - name: 查看 mosdns 支持的插件
+        working-directory: openwrt
+        run: |
+          make package/mosdns/compile -j1 V=s || true
+
+          echo "===== strings ====="
+          find build_dir -name mosdns -type f | while read f; do
+            echo "$f"
+            strings "$f" | grep adblock || true
+          done
       
       - name: 下载源码包
         working-directory: openwrt
