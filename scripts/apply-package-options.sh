@@ -161,6 +161,7 @@ if [ "${INCLUDE_PASSWALL}" = "true" ]; then
   echo "启用 PassWall"
   append_config <<'EOF'
 CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-passwall_NFT=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
@@ -194,6 +195,7 @@ if [ "${INCLUDE_MOSDNS}" = "true" ]; then
 CONFIG_PACKAGE_luci-app-mosdns=y
 CONFIG_PACKAGE_mosdns=y
 CONFIG_PACKAGE_dnsmasq-full=y
+CONFIG_PACKAGE_v2dat=y
 EOF
 fi
 
